@@ -14,8 +14,8 @@ android {
         applicationId = "com.wangwesley.nkust_app"
         minSdk = 28
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -65,4 +65,5 @@ dependencies {
     implementation(libs.androidx.browser)
     implementation(libs.androidx.glance.appwidget)
     implementation(libs.play.app.update.ktx)
+    implementation("com.google.android.play:review-ktx:2.0.2")
 }

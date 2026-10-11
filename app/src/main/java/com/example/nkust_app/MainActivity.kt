@@ -27,6 +27,7 @@ import com.example.nkust_app.ui.main.MainScreen
 import com.example.nkust_app.ui.theme.Nkust_AppTheme
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory
 import com.google.android.play.core.install.model.UpdateAvailability
+import com.example.nkust_app.ui.components.InAppReview
 
 class MainActivity : ComponentActivity() {
 
@@ -64,6 +65,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        if (savedInstanceState == null) InAppReview.recordLaunch(this)
+
         val consentStorage = ConsentStorage(this)
         val session = SessionStorage(this)
         val credentialStorage = CredentialStorage(this)

@@ -81,6 +81,8 @@ import com.example.nkust_app.ui.theme.IosOrange
 import kotlinx.coroutines.delay
 import java.util.Calendar
 import com.example.nkust_app.ui.main.TabBarBottomSpace
+import com.example.nkust_app.ui.components.InAppReview
+import kotlin.time.Duration.Companion.seconds
 
 private enum class HomePage { Home, CreditDetail, CoursePlan, Profile }
 
@@ -183,6 +185,15 @@ private fun HomeContent(
 ) {
     val context = LocalContext.current
     val settings = remember { SettingsStorage(context) }
+
+    // 同 iOS：第 2 次開啟時，2 秒後請求評分
+//    LaunchedEffect(Unit) {
+//        if (InAppReview.shouldRequest(context)) {
+//            delay(2.seconds)
+//            InAppReview.request(context)
+//        }
+//    }
+
     var showInstagramBanner by remember { mutableStateOf(!settings.dismissedInstagramBanner) }
 
     // 每分鐘更新一次（進度條 + 課程狀態）
@@ -190,7 +201,7 @@ private fun HomeContent(
     var today by remember { mutableIntStateOf(weekdayIndex()) }
     LaunchedEffect(Unit) {
         while (true) {
-            delay(60_000)
+            delay(60.seconds)
             nowMinutes = currentMinutes()
             today = weekdayIndex()
         }
