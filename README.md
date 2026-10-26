@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Android-9%2B-3DDC84" />
   <img src="https://img.shields.io/badge/Jetpack%20Compose-Based-7F52FF" />
   <a href="https://github.com/wangwesley1125/NKUST_plus">
-    <img src="https://img.shields.io/badge/iOS%20版-NKUST__plus-blue" />
+    <img src="https://img.shields.io/badge/iOS%20 Version-NKUST__plus-blue" />
   </a>
 </p>
 
