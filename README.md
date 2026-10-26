@@ -6,7 +6,10 @@
 
 <p align="center">
   <a href="https://play.google.com/store/apps/details?id=com.wangwesley.nkust_app">
-    <img src="https://play.google.com/intl/en_us/badges/static/images/badges/zh-tw_badge_web_generic.png" width="180">
+    <img src="https://play.google.com/intl/en_us/badges/static/images/badges/zh-tw_badge_web_generic.png" height="60" align="middle">
+  </a>
+  <a href="https://apps.apple.com/tw/app/%E9%AB%98%E7%A7%91-plus/id6760967835">
+    <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" height="40" align="middle">
   </a>
 </p>
 
@@ -15,7 +18,7 @@
   <img src="https://img.shields.io/badge/Android-9%2B-3DDC84" />
   <img src="https://img.shields.io/badge/Jetpack%20Compose-Based-7F52FF" />
   <a href="https://github.com/wangwesley1125/NKUST_plus">
-    <img src="https://img.shields.io/badge/iOS%20 Version-NKUST__plus-blue" />
+    <img src="https://img.shields.io/badge/iOS%20版-NKUST__plus-blue" />
   </a>
 </p>
 
@@ -114,6 +117,9 @@
 
 ## 系統需求
 - Android 9（API 28）以上
+
+## 相關專案
+- 📱 iOS 版：[wangwesley1125/NKUST_plus](https://github.com/wangwesley1125/NKUST_plus)
 
 ## 版本紀錄
 
