@@ -205,12 +205,12 @@ private fun HomeContent(
     val settings = remember { SettingsStorage(context) }
 
     // 同 iOS：第 2 次開啟時，2 秒後請求評分
-//    LaunchedEffect(Unit) {
-//        if (InAppReview.shouldRequest(context)) {
-//            delay(2.seconds)
-//            InAppReview.request(context)
-//        }
-//    }
+    LaunchedEffect(Unit) {
+        if (InAppReview.shouldRequest(context)) {
+            delay(2.seconds)
+            InAppReview.request(context)
+        }
+    }
 
     var showInstagramBanner by remember { mutableStateOf(!settings.dismissedInstagramBanner) }
 
