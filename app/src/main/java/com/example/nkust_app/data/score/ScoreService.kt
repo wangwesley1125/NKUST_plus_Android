@@ -3,12 +3,10 @@ package com.example.nkust_app.data.score
 import android.content.Context
 import android.util.Log
 import com.example.nkust_app.data.network.NkustClient
-import com.example.nkust_app.data.network.SessionExpiredException
 import com.example.nkust_app.data.profile.ProfileService
 import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.text.PDFTextStripper
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException
@@ -92,26 +90,8 @@ class ScoreService(private val client: NkustClient, context: Context) {
 
     /** 先讀最新一學期成績單，讀不到姓名就改用個人資料頁 */
     suspend fun fetchStudentInfo(): TranscriptData? {
-        val fromPdf = try {
-            val page = fetchTranscriptPage()
-            page.semesters.firstOrNull()?.let { fetchTranscript(it, page.token) }
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: SessionExpiredException) {
-            throw e
-        } catch (e: Exception) {
-            Log.w(TAG, "成績單 PDF 讀取失敗", e)
-            null
-        }
-        if (fromPdf != null && fromPdf.studentName.isNotEmpty()) {
-            Log.d(TAG, "學生資料：來自成績單 PDF")
-            return fromPdf
-        }
-
-        Log.d(TAG, "成績單 PDF 解析不到姓名，改用個人資料頁")
         val profile = profileService.fetchProfile()
         if (profile.name.isEmpty()) return null
-        Log.d(TAG, "學生資料：來自個人資料頁")
         return TranscriptData(
             studentId = profile.studentId,
             studentName = profile.name,
