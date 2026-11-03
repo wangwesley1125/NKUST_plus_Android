@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.nkust_app.ui.about.policySections
 import com.example.nkust_app.ui.theme.Nkust_AppTheme
 import com.example.nkust_app.ui.theme.IosBlue
 
@@ -76,31 +77,12 @@ fun PrivacyConsentScreen(
                 )
             }
 
-            PolicySection("一、", "蒐集目的") {
-                PolicyText("本 App 提供校務系統連結、課表查詢及相關校園資訊服務。")
-            }
-            PolicySection("二、", "蒐集之個人資料類別") {
-                PolicyText("使用者透過 App 內建 WebView 登入學校系統時，相關驗證資訊係由學校系統處理。本 App 僅透過系統提供之 CookieManager 機制，暫時儲存登入狀態（Cookie），以維持使用期間之登入狀態。")
-                PolicyText("若使用者選擇開啟「AutoFill 自動填入」功能，帳號密碼將以加密方式儲存於裝置本地（Android Keystore），不會傳輸至任何伺服器或第三方。")
-            }
-            PolicySection("三、", "個人資料利用方式") {
-                PolicyText("Cookie 及帳密（如啟用 AutoFill）僅用於：")
-                BulletRow("維持登入狀態")
-                BulletRow("提供課表與校務資訊查詢功能")
-                BulletRow("AutoFill 自動填入登入表單（需使用者明確同意）")
-                PolicyText("本 App 不會讀取、分析或另行利用帳號相關敏感資訊，亦不會傳送至第三方。")
-            }
-            PolicySection("四、", "資料保存與安全") {
-                PolicyText("登入狀態（Cookie）暫時儲存於裝置本地，不會傳輸至任何伺服器或第三方。Cookie 將依學校系統設定於期限內自動失效，屆時 App 將自動登出，使用者須重新登入。使用者亦可透過登出或清除 App 資料方式主動移除登入狀態。AutoFill 帳密以加密方式儲存於裝置，使用者可隨時在 App 內刪除。")
-            }
-            PolicySection("五、", "使用者權利") {
-                PolicyText("使用者可隨時停止使用本 App，或清除資料以終止相關處理行為。")
-            }
-            PolicySection("六、", "資料提供") {
-                PolicyText("若使用者不進行登入，將無法使用部分需驗證之功能（如課表查詢）。")
-            }
-            PolicySection("七", "位置資訊") {
-                PolicyText("校園地圖的「我的位置」功能需要使用裝置的位置資訊，僅在使用者按下定位按鈕並同意授權後使用，本 App 不會儲存或傳送位置資訊。校園地圖由 Google Maps 提供，相關資料處理適用 Google 隱私權政策。")
+            // 條文與「關於 → 隱私政策」共用同一份，兩邊永遠一致
+            policySections().forEach { section ->
+                PolicySection("${section.number}、", section.title) {
+                    section.paragraphs.forEach { PolicyText(it) }
+                    section.bullets.forEach { BulletRow(it) }
+                }
             }
         }
         HorizontalDivider()

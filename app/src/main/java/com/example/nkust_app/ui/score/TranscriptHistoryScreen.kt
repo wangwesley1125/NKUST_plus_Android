@@ -25,6 +25,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.nkust_app.data.rating.RatableCourse
 import com.example.nkust_app.data.score.TranscriptCourse
 import com.example.nkust_app.data.score.TranscriptData
 import com.example.nkust_app.ui.theme.IosBlue
@@ -32,6 +33,9 @@ import com.example.nkust_app.ui.theme.IosGreen
 import com.example.nkust_app.ui.theme.IosOrange
 import com.example.nkust_app.ui.theme.IosPurple
 import java.util.Locale
+import com.example.nkust_app.ui.main.TabBarBottomSpace
+import com.example.nkust_app.ui.rating.CourseRatingSheet
+import com.example.nkust_app.ui.rating.RecommendButton
 
 @Composable
 fun TranscriptHistoryScreen(
@@ -41,6 +45,7 @@ fun TranscriptHistoryScreen(
     viewModel: TranscriptHistoryViewModel = viewModel()
 ) {
     BackHandler(onBack = onBack)
+    var ratingTarget by remember { mutableStateOf<RatableCourse?>(null) }
 
     LaunchedEffect(viewModel.sessionExpired) {
         if (viewModel.sessionExpired) onSessionExpired()
@@ -79,13 +84,31 @@ fun TranscriptHistoryScreen(
                     OutlinedButton(onClick = viewModel::load) { Text("重試") }
                 }
 
-                data != null -> TranscriptContent(data)
+                data != null -> {
+                    val semester = viewModel.selectedYM
+                    TranscriptContent(
+                        data = data,
+                        semester = semester,
+                        onRecommend = { course ->
+                            RatableCourse.from(course, semester)?.let { ratingTarget = it }
+                        }
+                    )
+                }
 
                 else -> CenterBox {
                     Text("請選擇學期", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
+    }
+
+    // 按「推薦」後跳出的評分表單：歷年成績單沒有老師，用該學期課表對得到就自動帶入
+    ratingTarget?.let { course ->
+        CourseRatingSheet(
+            course = course,
+            teacher = viewModel.teacherFor(course.name, "${course.year}-${course.term}"),
+            onDismiss = { ratingTarget = null }
+        )
     }
 }
 
@@ -199,7 +222,11 @@ private fun SemesterPicker(
 // ═══════════════ 主要內容 ═══════════════
 
 @Composable
-private fun TranscriptContent(data: TranscriptData) {
+private fun TranscriptContent(
+    data: TranscriptData,
+    semester: String,
+    onRecommend: (TranscriptCourse) -> Unit
+) {
     var filterType by rememberSaveable(data.semester) { mutableStateOf("全部") }
     var sortByScore by rememberSaveable(data.semester) { mutableStateOf(false) }
 
@@ -211,7 +238,7 @@ private fun TranscriptContent(data: TranscriptData) {
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
+        contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = TabBarBottomSpace),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         // 成績摘要卡
@@ -254,6 +281,7 @@ private fun TranscriptContent(data: TranscriptData) {
                 HeaderText("修別", Modifier.width(46.dp))
                 HeaderText("學分", Modifier.width(36.dp))
                 HeaderText("成績", Modifier.width(44.dp))
+                Spacer(Modifier.width(52.dp))   // 推薦按鈕
             }
         }
 
@@ -266,7 +294,11 @@ private fun TranscriptContent(data: TranscriptData) {
                     .background(MaterialTheme.colorScheme.surfaceContainerLow)
             ) {
                 courses.forEachIndexed { index, course ->
-                    CourseRow(course)
+                    CourseRow(
+                        course = course,
+                        courseKey = RatableCourse.from(course, semester)?.courseKey,
+                        onRecommend = { onRecommend(course) }
+                    )
                     if (index < courses.lastIndex) {
                         HorizontalDivider(
                             Modifier.padding(start = 16.dp),
@@ -333,7 +365,7 @@ private fun FilterBar(
 }
 
 @Composable
-private fun CourseRow(course: TranscriptCourse) {
+private fun CourseRow(course: TranscriptCourse, courseKey: String?, onRecommend: () -> Unit) {
     Row(
         Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -377,5 +409,12 @@ private fun CourseRow(course: TranscriptCourse) {
             textAlign = TextAlign.Center,
             modifier = Modifier.width(44.dp)
         )
+
+        // 推薦（推薦過就變「已推薦」）；學期格式不對時留空位對齊
+        if (courseKey != null) {
+            RecommendButton(courseKey = courseKey, onClick = onRecommend)
+        } else {
+            Spacer(Modifier.width(52.dp))
+        }
     }
 }

@@ -7,9 +7,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.nkust_app.data.course.CourseService
 import com.example.nkust_app.data.network.NkustClient
 import com.example.nkust_app.data.network.SessionExpiredException
 import com.example.nkust_app.data.network.toUserMessage
+import com.example.nkust_app.data.rating.CourseRatingRepository
+import com.example.nkust_app.data.rating.normalizeCourseText
 import com.example.nkust_app.data.score.ScoreRecord
 import com.example.nkust_app.data.score.ScoreService
 import com.example.nkust_app.data.score.TranscriptData
@@ -29,7 +32,12 @@ data class ScoreListState(
 
 class ScoreViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val service = ScoreService(NkustClient(application), application)
+    private val client = NkustClient(application)
+    private val service = ScoreService(client, application)
+    private val courseService = CourseService(client)
+
+    /** 課名（正規化）→ 老師；從本學期課表對應，給課程推薦自動帶入老師用 */
+    private var teacherLookup by mutableStateOf<Map<String, String>>(emptyMap())
 
     var studentInfo by mutableStateOf<TranscriptData?>(null)
         private set
@@ -43,8 +51,13 @@ class ScoreViewModel(application: Application) : AndroidViewModel(application) {
         private set
 
     init {
+        CourseRatingRepository.init(application)
         loadStudentInfo()
+        loadTeacherLookup()
     }
+
+    /** 對不到（例如不是本學期的課）就回傳空字串，讓使用者自己填 */
+    fun teacherFor(courseName: String): String = teacherLookup[normalizeCourseText(courseName)].orEmpty()
 
     fun stateOf(tab: ScoreTab) = if (tab == ScoreTab.Midterm) midterm else semester
 
@@ -77,6 +90,8 @@ class ScoreViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             try {
                 studentInfo = service.fetchStudentInfo()?.takeIf { it.studentName.isNotEmpty() }
+                // 課程推薦需要學號（一人一票）和科系（分科系統計）
+                studentInfo?.let { CourseRatingRepository.setUser(it.studentId, it.department) }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: SessionExpiredException) {
@@ -85,6 +100,23 @@ class ScoreViewModel(application: Application) : AndroidViewModel(application) {
                 Log.w(TAG, "學生資料載入失敗", e)
             }
             isLoadingStudentInfo = false
+        }
+    }
+
+    private fun loadTeacherLookup() {
+        viewModelScope.launch {
+            try {
+                val lookup = mutableMapOf<String, String>()
+                courseService.fetchCourses().forEach { course ->
+                    lookup.putIfAbsent(normalizeCourseText(course.name), course.teacher)
+                }
+                teacherLookup = lookup
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // 抓不到老師不影響成績頁，推薦時讓使用者自己填
+                Log.w(TAG, "成績頁載入課表（老師對應）失敗", e)
+            }
         }
     }
 

@@ -11,6 +11,10 @@ class ConsentStorage(context: Context) {
         set(value) = prefs.edit { putBoolean(KEY, value) }
 
     companion object {
-        private const val KEY = "hasAgreedPrivacyPolicy"
+        /**
+         * 條文有重大變更時把版本號 +1，所有人會重新看到同意畫面。
+         * v2：加入課程推薦（學號雜湊、科系、修課心得上傳至伺服器）
+         */
+        private const val KEY = "hasAgreedPrivacyPolicy_v2"
     }
 }

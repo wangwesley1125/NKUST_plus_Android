@@ -33,6 +33,7 @@ import com.google.zxing.common.BitMatrix
 import com.google.zxing.oned.Code128Writer
 import com.google.zxing.qrcode.QRCodeWriter
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
+import com.example.nkust_app.ui.main.TabBarBottomSpace
 
 @Composable
 fun LibraryCardScreen(
@@ -60,7 +61,8 @@ fun LibraryCardScreen(
                 .padding(padding)
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(24.dp),
+                .padding(24.dp)
+                .padding(bottom = TabBarBottomSpace),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(32.dp, Alignment.CenterVertically)
         ) {

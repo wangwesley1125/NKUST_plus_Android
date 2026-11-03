@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.nkust_app.ui.calendar.CalendarScreen
 import com.example.nkust_app.ui.components.BackTopBar
+import com.example.nkust_app.ui.main.TabBarBottomSpace
 
 private enum class ProfilePage { Main, LibraryCard, Certificate, Calendar }
 
@@ -103,7 +104,8 @@ fun ProfileScreen(
                         .padding(padding)
                         .fillMaxSize()
                         .verticalScroll(rememberScrollState())
-                        .padding(16.dp),
+                        .padding(16.dp)
+                        .padding(bottom = TabBarBottomSpace),
                     verticalArrangement = Arrangement.spacedBy(20.dp)
                 ) {
                     ProfileHeader(viewModel, onShowLibraryCard = { page = ProfilePage.LibraryCard })

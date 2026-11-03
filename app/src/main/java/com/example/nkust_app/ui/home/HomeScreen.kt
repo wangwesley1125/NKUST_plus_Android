@@ -36,7 +36,9 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Sensors
+import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material.icons.filled.Verified
+import androidx.compose.material.icons.outlined.ThumbUp
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -74,6 +76,10 @@ import com.example.nkust_app.data.SettingsStorage
 import com.example.nkust_app.data.course.Course
 import com.example.nkust_app.data.course.CourseParser
 import com.example.nkust_app.data.graduation.GraduationStatus
+import com.example.nkust_app.data.rating.CourseStat
+import com.example.nkust_app.data.rating.recommendRateColor
+import com.example.nkust_app.ui.rating.CourseRecommendScreen
+import com.example.nkust_app.ui.rating.RatingDot
 import com.example.nkust_app.ui.main.PlaceholderScreen
 import com.example.nkust_app.ui.profile.ProfileScreen
 import com.example.nkust_app.ui.theme.IosGreen
@@ -84,7 +90,7 @@ import com.example.nkust_app.ui.main.TabBarBottomSpace
 import com.example.nkust_app.ui.components.InAppReview
 import kotlin.time.Duration.Companion.seconds
 
-private enum class HomePage { Home, CreditDetail, CoursePlan, Profile }
+private enum class HomePage { Home, CreditDetail, CoursePlan, Profile, Recommend }
 
 @Composable
 fun HomeScreen(
@@ -97,6 +103,11 @@ fun HomeScreen(
 
     LaunchedEffect(viewModel.sessionExpired) {
         if (viewModel.sessionExpired) onSessionExpired()
+    }
+
+    // 從課程推薦頁（或其他子頁）回到首頁時，更新推薦數（可能剛推薦完）
+    LaunchedEffect(page) {
+        if (page == HomePage.Home) viewModel.loadCourseStats()
     }
 
     val graduation = viewModel.graduation
@@ -114,6 +125,11 @@ fun HomeScreen(
             modifier = modifier
         )
 
+        page == HomePage.Recommend -> CourseRecommendScreen(
+            onBack = { page = HomePage.Home },
+            modifier = modifier
+        )
+
         page == HomePage.Profile -> ProfileScreen(
             onBack = { page = HomePage.Home },
             onLogout = onLogout,
@@ -125,6 +141,7 @@ fun HomeScreen(
             viewModel = viewModel,
             onOpenCredit = { page = HomePage.CreditDetail },
             onOpenProfile = { page = HomePage.Profile },
+            onOpenRecommend = { page = HomePage.Recommend },
             modifier = modifier
         )
     }
@@ -181,6 +198,7 @@ private fun HomeContent(
     viewModel: HomeViewModel,
     onOpenCredit: () -> Unit,
     onOpenProfile: () -> Unit,
+    onOpenRecommend: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -217,7 +235,7 @@ private fun HomeContent(
 
     Scaffold(
         modifier = modifier,
-        topBar = { HomeTopBar(onOpenProfile) }
+        topBar = { HomeTopBar(onOpenProfile, onOpenRecommend) }
     ) { padding ->
         if (viewModel.isLoading) {
             Column(
@@ -256,7 +274,7 @@ private fun HomeContent(
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 SectionHeader("上課中", Icons.Filled.Sensors, MaterialTheme.colorScheme.primary)
                 if (ongoing != null) {
-                    OngoingCourseCard(ongoing, nowMinutes)
+                    OngoingCourseCard(ongoing, nowMinutes, viewModel.statFor(ongoing))
                 } else {
                     EmptyStateCard(Icons.Filled.Coffee, "目前沒有正在進行中的課程")
                 }
@@ -271,7 +289,7 @@ private fun HomeContent(
                     EmptyStateCard(Icons.Filled.Verified, "沒有課程了喔～🎉")
                 } else {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        upcoming.forEach { UpcomingCourseRow(it) }
+                        upcoming.forEach { UpcomingCourseRow(it, viewModel.statFor(it)) }
                     }
                 }
             }
@@ -280,13 +298,24 @@ private fun HomeContent(
 }
 
 @Composable
-private fun HomeTopBar(onOpenProfile: () -> Unit) {
+private fun HomeTopBar(onOpenProfile: () -> Unit, onOpenRecommend: () -> Unit) {
     Box(
         Modifier
             .fillMaxWidth()
             .statusBarsPadding()
             .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
+        // 左上：課程推薦
+        FilledIconButton(
+            onClick = onOpenRecommend,
+            modifier = Modifier.size(48.dp).align(Alignment.CenterStart),
+            colors = IconButtonDefaults.filledIconButtonColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                contentColor = MaterialTheme.colorScheme.primary
+            )
+        ) {
+            Icon(Icons.Filled.ThumbUp, contentDescription = "課程推薦", modifier = Modifier.size(26.dp))
+        }
         Text(
             "NKUST Plus",
             style = MaterialTheme.typography.titleLarge,
@@ -469,7 +498,7 @@ private fun SectionHeader(title: String, icon: ImageVector, color: Color) {
 }
 
 @Composable
-private fun OngoingCourseCard(course: Course, nowMinutes: Int) {
+private fun OngoingCourseCard(course: Course, nowMinutes: Int, stat: CourseStat?) {
     val teal = MaterialTheme.colorScheme.primary
     val shape = RoundedCornerShape(16.dp)
     val progress = courseProgress(course.period, nowMinutes)
@@ -504,6 +533,10 @@ private fun OngoingCourseCard(course: Course, nowMinutes: Int) {
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(top = 6.dp)
                 )
+                if (stat != null) {
+                    Spacer(Modifier.height(6.dp))
+                    RatingBadge(stat)
+                }
             }
             Box(
                 Modifier.size(56.dp).clip(CircleShape).background(teal.copy(alpha = 0.15f)),
@@ -571,7 +604,7 @@ private fun InfoCell(icon: ImageVector, label: String, color: Color, modifier: M
 }
 
 @Composable
-private fun UpcomingCourseRow(course: Course) {
+private fun UpcomingCourseRow(course: Course, stat: CourseStat?) {
     val shape = RoundedCornerShape(12.dp)
     Row(
         Modifier
@@ -608,6 +641,46 @@ private fun UpcomingCourseRow(course: Course) {
                 IconText(Icons.Filled.Person, course.teacher, MaterialTheme.colorScheme.onSurfaceVariant)
                 IconText(Icons.Filled.LocationOn, course.room, MaterialTheme.colorScheme.primary)
             }
+            if (stat != null) RatingBadge(stat)
+        }
+    }
+}
+
+/**
+ * 推薦徽章（對應 iOS 的 RatingBadge）
+ * 「● 85% 推薦・20 人」（推薦 = 選「超級推薦」或「還可以」；圓點顏色依推薦率）
+ * 還沒有人評：「尚無評分」；還沒載入：不顯示（呼叫端傳 null 就不呼叫）
+ */
+@Composable
+private fun RatingBadge(stat: CourseStat) {
+    val rate = stat.overall.recommendRate
+    if (rate != null) {
+        val tint = recommendRateColor(rate)
+        Row(
+            Modifier
+                .clip(CircleShape)
+                .background(tint.copy(alpha = 0.12f))
+                .padding(horizontal = 8.dp, vertical = 3.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            RatingDot(tint, size = 7.dp)
+            Spacer(Modifier.width(5.dp))
+            Text(
+                "${Math.round(rate * 100)}% 推薦・${stat.overall.total} 人",
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = tint
+            )
+        }
+    } else {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                Icons.Outlined.ThumbUp, contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(12.dp)
+            )
+            Spacer(Modifier.width(4.dp))
+            Text("尚無評分", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

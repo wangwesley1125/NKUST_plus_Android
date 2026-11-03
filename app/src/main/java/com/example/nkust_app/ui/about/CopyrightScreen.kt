@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import com.example.nkust_app.ui.components.BackTopBar
 import com.example.nkust_app.ui.theme.IosBlue
 import com.example.nkust_app.ui.theme.IosOrange
+import com.example.nkust_app.ui.main.TabBarBottomSpace
 
 @Composable
 fun CopyrightScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
@@ -38,7 +39,8 @@ fun CopyrightScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 .padding(padding)
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp),
+                .padding(16.dp)
+                .padding(bottom = TabBarBottomSpace),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             disclaimers.forEach { (icon, color, text) ->

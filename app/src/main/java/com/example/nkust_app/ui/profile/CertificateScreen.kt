@@ -28,6 +28,7 @@ import com.example.nkust_app.ui.components.CircleIconButton
 import com.example.nkust_app.ui.components.PdfPages
 import com.example.nkust_app.ui.components.sharePdf
 import com.example.nkust_app.ui.theme.IosOrange
+import com.example.nkust_app.ui.main.TabBarBottomSpace
 
 @Composable
 fun CertificateScreen(
@@ -68,7 +69,8 @@ fun CertificateScreen(
                     Modifier
                         .fillMaxSize()
                         .verticalScroll(rememberScrollState())
-                        .padding(24.dp),
+                        .padding(24.dp)
+                        .padding(bottom = TabBarBottomSpace),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically)
                 ) {
@@ -98,7 +100,7 @@ fun CertificateScreen(
                     if (viewModel.isSwitching) {
                         LoadingView("切換中...")
                     } else {
-                        PdfPages(file, Modifier.fillMaxSize())
+                        PdfPages(file, Modifier.fillMaxSize(), bottomPadding = TabBarBottomSpace)
                     }
                 }
             }

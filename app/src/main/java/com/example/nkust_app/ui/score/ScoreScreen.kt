@@ -28,6 +28,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.nkust_app.data.rating.RatableCourse
 import com.example.nkust_app.data.score.ScoreRecord
 import com.example.nkust_app.data.score.TranscriptData
 import com.example.nkust_app.ui.theme.IosBlue
@@ -36,6 +37,8 @@ import com.example.nkust_app.ui.theme.IosOrange
 import com.example.nkust_app.ui.theme.IosPurple
 import java.util.Locale
 import com.example.nkust_app.ui.main.TabBarBottomSpace
+import com.example.nkust_app.ui.rating.CourseRatingSheet
+import com.example.nkust_app.ui.rating.RecommendButton
 
 @Composable
 fun ScoreScreen(
@@ -45,6 +48,7 @@ fun ScoreScreen(
 ) {
     var tab by rememberSaveable { mutableStateOf(ScoreTab.Midterm) }
     var showHistory by rememberSaveable { mutableStateOf(false) }
+    var ratingTarget by remember { mutableStateOf<RatableCourse?>(null) }
 
     LaunchedEffect(viewModel.sessionExpired) {
         if (viewModel.sessionExpired) onSessionExpired()
@@ -85,10 +89,20 @@ fun ScoreScreen(
                     state = viewModel.stateOf(tab),
                     scoreColumnTitle = if (tab == ScoreTab.Midterm) "期中" else "學期",
                     emptyText = if (tab == ScoreTab.Midterm) "目前無期中成績" else "目前無當學期成績",
-                    onRetry = { viewModel.load(tab) }
+                    onRetry = { viewModel.load(tab) },
+                    onRecommend = { ratingTarget = RatableCourse.from(it) }
                 )
             }
         }
+    }
+
+    // 按「推薦」後跳出的評分表單
+    ratingTarget?.let { course ->
+        CourseRatingSheet(
+            course = course,
+            teacher = viewModel.teacherFor(course.name),
+            onDismiss = { ratingTarget = null }
+        )
     }
 }
 
@@ -261,7 +275,8 @@ private fun ScoreList(
     state: ScoreListState,
     scoreColumnTitle: String,
     emptyText: String,
-    onRetry: () -> Unit
+    onRetry: () -> Unit,
+    onRecommend: (ScoreRecord) -> Unit
 ) {
     when {
         state.isLoading || !state.loaded -> CenterBox {
@@ -289,7 +304,7 @@ private fun ScoreList(
             )
         }
 
-        else -> ScoreContent(state.records, scoreColumnTitle)
+        else -> ScoreContent(state.records, scoreColumnTitle, onRecommend)
     }
 }
 
@@ -304,7 +319,11 @@ fun CenterBox(content: @Composable ColumnScope.() -> Unit) {
 }
 
 @Composable
-private fun ScoreContent(records: List<ScoreRecord>, scoreColumnTitle: String) {
+private fun ScoreContent(
+    records: List<ScoreRecord>,
+    scoreColumnTitle: String,
+    onRecommend: (ScoreRecord) -> Unit
+) {
     var filterType by rememberSaveable { mutableStateOf("全部") }
     var sortByScore by rememberSaveable { mutableStateOf(false) }
 
@@ -387,6 +406,7 @@ private fun ScoreContent(records: List<ScoreRecord>, scoreColumnTitle: String) {
                 HeaderText("修別", Modifier.width(46.dp))
                 HeaderText("學分", Modifier.width(36.dp))
                 HeaderText(scoreColumnTitle, Modifier.width(50.dp))
+                Spacer(Modifier.width(52.dp))   // 推薦按鈕
             }
         }
 
@@ -399,7 +419,7 @@ private fun ScoreContent(records: List<ScoreRecord>, scoreColumnTitle: String) {
                     .background(MaterialTheme.colorScheme.surfaceContainerLow)
             ) {
                 filtered.forEachIndexed { index, record ->
-                    RecordRow(record)
+                    RecordRow(record, onRecommend = { onRecommend(record) })
                     if (index < filtered.lastIndex) {
                         HorizontalDivider(
                             Modifier.padding(start = 16.dp),
@@ -432,7 +452,7 @@ fun HeaderText(text: String, modifier: Modifier, align: TextAlign = TextAlign.Ce
 }
 
 @Composable
-private fun RecordRow(record: ScoreRecord) {
+private fun RecordRow(record: ScoreRecord, onRecommend: () -> Unit) {
     Row(
         Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -472,6 +492,11 @@ private fun RecordRow(record: ScoreRecord) {
             color = scoreColor(record.score),
             textAlign = TextAlign.Center,
             modifier = Modifier.width(50.dp)
+        )
+
+        RecommendButton(
+            courseKey = RatableCourse.from(record).courseKey,
+            onClick = onRecommend
         )
     }
 }
