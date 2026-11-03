@@ -141,9 +141,5 @@
 ## 相關專案
 - 📱 iOS 版：[wangwesley1125/NKUST_plus](https://github.com/wangwesley1125/NKUST_plus)
 
-## 版本紀錄
-
-請參閱 [Releases](https://github.com/wangwesley1125/NKUST_plus_Android/releases) 頁面
-
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
