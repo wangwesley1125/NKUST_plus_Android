@@ -147,6 +147,8 @@ fun CourseRatingSheet(
     var errorText by remember { mutableStateOf<String?>(null) }
     /** 統計顯示：false = 全校、true = 本系 */
     var showDepartment by remember { mutableStateOf(false) }
+    /** 送出前的確認視窗（送出後無法修改，讓使用者再看一眼） */
+    var confirmLevel by remember { mutableStateOf<RatingLevel?>(null) }
 
     val current = repo.rating(course.courseKey)
     /** 學號還沒載入前不能評（伺服器需要學號判斷一人一票） */
@@ -447,14 +449,17 @@ fun CourseRatingSheet(
                     Text(message, fontSize = 12.sp, color = IosOrange, textAlign = TextAlign.Center)
                 } else {
                     Text(
-                        "每門課只能推薦一次，送出後無法修改",
+                        "每門課只能推薦一次，送出後無法修改，如需更正請聯絡開發者",
                         fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
                 val level = selected
                 Button(
-                    onClick = { level?.let { submit(it) } },
+                    onClick = {
+                        focus.clearFocus()
+                        confirmLevel = level
+                    },
                     enabled = level != null && current == null && !commentTooLong &&
                             !teacherTooLong && canRate && !isSubmitting,
                     modifier = Modifier
@@ -478,7 +483,37 @@ fun CourseRatingSheet(
             }
         }
     }
+
+    // 送出前確認
+    confirmLevel?.let { level ->
+        AlertDialog(
+            onDismissRequest = { confirmLevel = null },
+            title = { Text("確定要送出嗎？") },
+            text = { Text(confirmMessage(course, trimmedTeacher, trimmedComment, level)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmLevel = null
+                    submit(level)
+                }) { Text("送出", fontWeight = FontWeight.SemiBold) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmLevel = null }) { Text("再看看") }
+            }
+        )
+    }
 }
+
+/** 確認視窗內容：列出要送出的內容；沒填老師時多提醒一句 */
+private fun confirmMessage(course: RatableCourse, teacher: String, comment: String, level: RatingLevel): String =
+    buildString {
+        append("${course.name}・${teacher.ifEmpty { "老師未提供" }}・${level.title}")
+        if (comment.isNotEmpty()) {
+            append("\n心得：")
+            append(if (comment.length > 30) comment.take(30) + "…" else comment)
+        }
+        if (teacher.isEmpty()) append("\n\n你還沒填授課教師，其他同學會看到「老師未提供」。")
+        append("\n\n送出後無法修改，如需更正請透過「關於」頁面聯絡開發者。")
+    }
 
 @Composable
 private fun SectionTitle(text: String) {
