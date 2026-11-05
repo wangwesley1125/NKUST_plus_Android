@@ -119,6 +119,9 @@
   - `CourseRatingSheet` / `CourseRecommendScreen`：評分表單與課程推薦頁
   - 後端：Cloudflare Workers + D1（SQLite），與 iOS 版共用
 
+## 目前 APP 架構圖
+[![Architecture diagram of wangwesley1125/nkust_plus_android](https://gitdiagram.com/wangwesley1125/nkust_plus_android/diagram.png)](https://gitdiagram.com/wangwesley1125/nkust_plus_android?utm_source=readme&utm_medium=picture)
+
 ## 隱私與資料處理
 - 登入流程在 App 內建 `WebView` 中完成，驗證由學校系統處理
 - 僅將登入狀態所需的 Cookie 儲存在本機以維持登入
